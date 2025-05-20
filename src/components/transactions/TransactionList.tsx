@@ -4,7 +4,11 @@ import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { supabase, Transaction } from '@/lib/supabase';
 
-export default function TransactionList() {
+interface TransactionListProps {
+  userId?: string;
+}
+
+export default function TransactionList({ userId }: TransactionListProps) {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -14,15 +18,22 @@ export default function TransactionList() {
     setError(null);
 
     try {
-      const { data: userData, error: userError } = await supabase.auth.getUser();
-      
-      if (userError) throw userError;
-      if (!userData.user) throw new Error('You must be logged in to view transactions');
+      let userIdToUse = userId;
+
+      // If userId is not provided as a prop, get it from the current session
+      if (!userIdToUse) {
+        const { data: userData, error: userError } = await supabase.auth.getUser();
+
+        if (userError) throw userError;
+        if (!userData.user) throw new Error('You must be logged in to view transactions');
+
+        userIdToUse = userData.user.id;
+      }
 
       const { data, error: transactionError } = await supabase
         .from('transactions')
         .select('*')
-        .eq('user_id', userData.user.id)
+        .eq('user_id', userIdToUse)
         .order('transaction_date', { ascending: false });
 
       if (transactionError) throw transactionError;
@@ -31,6 +42,7 @@ export default function TransactionList() {
       const transactionsWithProfitLoss = calculateProfitLoss(data || []);
       setTransactions(transactionsWithProfitLoss);
     } catch (err: any) {
+      console.error('Error fetching transactions:', err);
       setError(err.message || 'An error occurred');
     } finally {
       setLoading(false);
@@ -62,7 +74,7 @@ export default function TransactionList() {
         // Calculate profit/loss for sells based on average cost
         const costBasis = averageCost * usdt_amount;
         profitLoss = total_value - costBasis;
-        
+
         // Update running totals
         runningBalance -= usdt_amount;
         totalCost = runningBalance > 0 ? averageCost * runningBalance : 0;
@@ -77,12 +89,12 @@ export default function TransactionList() {
 
   useEffect(() => {
     fetchTransactions();
-    
+
     // Set up real-time subscription for new transactions
     const subscription = supabase
       .channel('transactions-changes')
-      .on('postgres_changes', 
-        { event: '*', schema: 'public', table: 'transactions' }, 
+      .on('postgres_changes',
+        { event: '*', schema: 'public', table: 'transactions' },
         () => {
           fetchTransactions();
         }
@@ -92,7 +104,7 @@ export default function TransactionList() {
     return () => {
       subscription.unsubscribe();
     };
-  }, []);
+  }, [userId]); // Re-fetch when userId changes
 
   if (loading) {
     return <div className="text-center py-4">Loading transactions...</div>;

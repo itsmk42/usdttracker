@@ -22,7 +22,12 @@ const transactionSchema = z.object({
 
 type TransactionFormValues = z.infer<typeof transactionSchema>;
 
-export default function TransactionForm({ onSuccess }: { onSuccess: () => void }) {
+interface TransactionFormProps {
+  onSuccess: () => void;
+  userId?: string;
+}
+
+export default function TransactionForm({ onSuccess, userId }: TransactionFormProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -51,13 +56,20 @@ export default function TransactionForm({ onSuccess }: { onSuccess: () => void }
     setError(null);
 
     try {
-      const { data: userData, error: userError } = await supabase.auth.getUser();
-      
-      if (userError) throw userError;
-      if (!userData.user) throw new Error('You must be logged in to add transactions');
+      let userIdToUse = userId;
+
+      // If userId is not provided as a prop, get it from the current session
+      if (!userIdToUse) {
+        const { data: userData, error: userError } = await supabase.auth.getUser();
+
+        if (userError) throw userError;
+        if (!userData.user) throw new Error('You must be logged in to add transactions');
+
+        userIdToUse = userData.user.id;
+      }
 
       const { error: transactionError } = await supabase.from('transactions').insert({
-        user_id: userData.user.id,
+        user_id: userIdToUse,
         transaction_date: data.transaction_date,
         transaction_type: data.transaction_type,
         usdt_amount: data.usdt_amount,
@@ -70,6 +82,7 @@ export default function TransactionForm({ onSuccess }: { onSuccess: () => void }
       reset();
       onSuccess();
     } catch (err: any) {
+      console.error('Error adding transaction:', err);
       setError(err.message || 'An error occurred');
     } finally {
       setLoading(false);
@@ -111,7 +124,7 @@ export default function TransactionForm({ onSuccess }: { onSuccess: () => void }
             <select
               id="transaction_type"
               {...register('transaction_type')}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
               disabled={loading}
             >
               <option value="buy">Buy</option>

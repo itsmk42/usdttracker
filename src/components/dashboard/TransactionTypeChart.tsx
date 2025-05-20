@@ -56,8 +56,19 @@ export default function TransactionTypeChart({ transactions }: TransactionTypeCh
     plugins: {
       legend: {
         position: 'top' as const,
+        labels: {
+          color: 'black', // Ensure legend labels are black
+          font: {
+            weight: 'bold' // Make legend text bold for better visibility
+          }
+        }
       },
       tooltip: {
+        backgroundColor: 'rgba(255, 255, 255, 0.9)', // Light background for tooltip
+        titleColor: 'black', // Black text for tooltip title
+        bodyColor: 'black', // Black text for tooltip body
+        borderColor: 'rgba(0, 0, 0, 0.1)',
+        borderWidth: 1,
         callbacks: {
           label: function(context: any) {
             const label = context.label || '';

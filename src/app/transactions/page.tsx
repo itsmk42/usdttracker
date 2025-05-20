@@ -1,26 +1,23 @@
-'use client';
+import { requireAuth } from '@/lib/auth';
+import TransactionsClient from './transactions-client';
 
-import { useState } from 'react';
-import TransactionForm from '@/components/transactions/TransactionForm';
-import TransactionList from '@/components/transactions/TransactionList';
+export const metadata = {
+  title: 'Transactions - USDT Transaction Tracker',
+  description: 'Manage your USDT transactions',
+};
 
-export default function TransactionsPage() {
-  const [refreshKey, setRefreshKey] = useState(0);
-
-  const handleTransactionAdded = () => {
-    setRefreshKey(prev => prev + 1);
-  };
+export default async function TransactionsPage() {
+  // This will redirect to /auth if the user is not authenticated
+  const session = await requireAuth();
 
   return (
     <div>
       <h1 className="text-2xl font-bold mb-6">Transactions</h1>
-      
-      <div className="mb-8">
-        <TransactionForm onSuccess={handleTransactionAdded} />
-      </div>
-      
-      <h2 className="text-xl font-semibold mb-4">Transaction History</h2>
-      <TransactionList key={refreshKey} />
+      <p className="mb-4 text-gray-600">
+        Welcome, {session.user.email}
+      </p>
+
+      <TransactionsClient userId={session.user.id} />
     </div>
   );
 }

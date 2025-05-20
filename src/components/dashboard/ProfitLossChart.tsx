@@ -64,7 +64,7 @@ export default function ProfitLossChart({ transactions }: ProfitLossChartProps) 
     });
 
     // Format dates for labels
-    const labels = sellTransactions.map(transaction => 
+    const labels = sellTransactions.map(transaction =>
       format(new Date(transaction.transaction_date), 'MMM d, yyyy')
     );
 
@@ -88,8 +88,19 @@ export default function ProfitLossChart({ transactions }: ProfitLossChartProps) 
     plugins: {
       legend: {
         position: 'top' as const,
+        labels: {
+          color: 'black', // Ensure legend labels are black
+          font: {
+            weight: 'bold' // Make legend text bold for better visibility
+          }
+        }
       },
       tooltip: {
+        backgroundColor: 'rgba(255, 255, 255, 0.9)', // Light background for tooltip
+        titleColor: 'black', // Black text for tooltip title
+        bodyColor: 'black', // Black text for tooltip body
+        borderColor: 'rgba(0, 0, 0, 0.1)',
+        borderWidth: 1,
         callbacks: {
           label: function(context: any) {
             let label = context.dataset.label || '';
@@ -108,9 +119,15 @@ export default function ProfitLossChart({ transactions }: ProfitLossChartProps) 
       y: {
         beginAtZero: false,
         ticks: {
+          color: 'black', // Ensure y-axis labels are black
           callback: function(value: any) {
             return '₹' + value.toFixed(2);
           }
+        }
+      },
+      x: {
+        ticks: {
+          color: 'black' // Ensure x-axis labels are black
         }
       }
     }

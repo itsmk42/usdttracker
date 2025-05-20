@@ -24,3 +24,32 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Ensure all select elements, dropdowns, and their options have black text for better readability */
+select,
+select option,
+.dropdown,
+.dropdown-menu,
+.dropdown-item,
+.dropdown-toggle,
+.dropdown-content,
+.select-menu,
+.chart-tooltip,
+.chart-legend,
+.chart-menu,
+.chart-dropdown {
+  color: black !important;
+}
+
+/* Ensure Chart.js tooltips and legends have black text */
+.chartjs-tooltip,
+.chartjs-legend {
+  color: black !important;
+}
+
+/* Apply black text to all elements with role="listbox" or role="option" */
+[role="listbox"],
+[role="option"],
+[role="combobox"] {
+  color: black !important;
+}

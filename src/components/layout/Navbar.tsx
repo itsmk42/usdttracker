@@ -1,46 +1,14 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/components/auth/AuthProvider';
 
 export default function Navbar() {
-  const [user, setUser] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const { user, loading, signOut } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const pathname = usePathname();
-
-  useEffect(() => {
-    const getUser = async () => {
-      const { data, error } = await supabase.auth.getUser();
-      if (!error && data?.user) {
-        setUser(data.user);
-      }
-      setLoading(false);
-    };
-
-    getUser();
-
-    const { data: authListener } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (session?.user) {
-          setUser(session.user);
-        } else {
-          setUser(null);
-        }
-        setLoading(false);
-      }
-    );
-
-    return () => {
-      authListener.subscription.unsubscribe();
-    };
-  }, []);
-
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
-  };
 
   const isActive = (path: string) => {
     return pathname === path;
@@ -88,7 +56,7 @@ export default function Navbar() {
               <div className="flex items-center space-x-4">
                 <div className="text-sm text-gray-500">{user.email}</div>
                 <button
-                  onClick={handleSignOut}
+                  onClick={signOut}
                   className="px-3 py-2 text-sm text-red-600 hover:text-red-800"
                 >
                   Sign Out
@@ -186,7 +154,7 @@ export default function Navbar() {
                 <div className="px-4 py-2 text-sm text-gray-500">{user.email}</div>
                 <button
                   onClick={() => {
-                    handleSignOut();
+                    signOut();
                     setMobileMenuOpen(false);
                   }}
                   className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"

@@ -6,7 +6,11 @@ import TransactionSummary from './TransactionSummary';
 import ProfitLossChart from './ProfitLossChart';
 import TransactionTypeChart from './TransactionTypeChart';
 
-export default function Dashboard() {
+interface DashboardProps {
+  userId?: string;
+}
+
+export default function Dashboard({ userId }: DashboardProps) {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -16,15 +20,22 @@ export default function Dashboard() {
     setError(null);
 
     try {
-      const { data: userData, error: userError } = await supabase.auth.getUser();
-      
-      if (userError) throw userError;
-      if (!userData.user) throw new Error('You must be logged in to view the dashboard');
+      let userIdToUse = userId;
+
+      // If userId is not provided as a prop, get it from the current session
+      if (!userIdToUse) {
+        const { data: userData, error: userError } = await supabase.auth.getUser();
+
+        if (userError) throw userError;
+        if (!userData.user) throw new Error('You must be logged in to view the dashboard');
+
+        userIdToUse = userData.user.id;
+      }
 
       const { data, error: transactionError } = await supabase
         .from('transactions')
         .select('*')
-        .eq('user_id', userData.user.id)
+        .eq('user_id', userIdToUse)
         .order('transaction_date', { ascending: true });
 
       if (transactionError) throw transactionError;
@@ -33,6 +44,7 @@ export default function Dashboard() {
       const transactionsWithProfitLoss = calculateProfitLoss(data || []);
       setTransactions(transactionsWithProfitLoss);
     } catch (err: any) {
+      console.error('Error fetching dashboard data:', err);
       setError(err.message || 'An error occurred');
     } finally {
       setLoading(false);
@@ -59,7 +71,7 @@ export default function Dashboard() {
         // Calculate profit/loss for sells based on average cost
         const costBasis = averageCost * usdt_amount;
         profitLoss = total_value - costBasis;
-        
+
         // Update running totals
         runningBalance -= usdt_amount;
         totalCost = runningBalance > 0 ? averageCost * runningBalance : 0;
@@ -74,12 +86,12 @@ export default function Dashboard() {
 
   useEffect(() => {
     fetchTransactions();
-    
+
     // Set up real-time subscription for new transactions
     const subscription = supabase
       .channel('dashboard-changes')
-      .on('postgres_changes', 
-        { event: '*', schema: 'public', table: 'transactions' }, 
+      .on('postgres_changes',
+        { event: '*', schema: 'public', table: 'transactions' },
         () => {
           fetchTransactions();
         }
@@ -89,7 +101,7 @@ export default function Dashboard() {
     return () => {
       subscription.unsubscribe();
     };
-  }, []);
+  }, [userId]); // Re-fetch when userId changes
 
   if (loading) {
     return <div className="text-center py-4">Loading dashboard...</div>;
@@ -114,13 +126,13 @@ export default function Dashboard() {
   return (
     <div className="space-y-6">
       <TransactionSummary transactions={transactions} />
-      
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="bg-white p-4 rounded-lg shadow">
           <h3 className="text-lg font-medium mb-4">Profit/Loss Over Time</h3>
           <ProfitLossChart transactions={transactions} />
         </div>
-        
+
         <div className="bg-white p-4 rounded-lg shadow">
           <h3 className="text-lg font-medium mb-4">Transaction Types</h3>
           <TransactionTypeChart transactions={transactions} />

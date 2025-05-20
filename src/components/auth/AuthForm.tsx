@@ -36,25 +36,38 @@ export default function AuthForm() {
     try {
       if (isLogin) {
         // Sign in
-        const { error } = await supabase.auth.signInWithPassword({
+        const { data: authData, error } = await supabase.auth.signInWithPassword({
           email: data.email,
           password: data.password,
         });
 
         if (error) throw error;
+
+        console.log('Login successful:', authData.user?.email);
         setSuccess('Logged in successfully!');
+
+        // Force redirect to dashboard after successful login
+        window.location.href = '/dashboard';
       } else {
         // Sign up
-        const { error } = await supabase.auth.signUp({
+        const { data: authData, error } = await supabase.auth.signUp({
           email: data.email,
           password: data.password,
         });
 
         if (error) throw error;
+
+        console.log('Signup successful:', authData.user?.email);
         setSuccess('Account created successfully! Please check your email for verification.');
+
+        // If email confirmation is disabled in Supabase, redirect to dashboard
+        if (authData.session) {
+          window.location.href = '/dashboard';
+        }
       }
       reset();
     } catch (err: any) {
+      console.error('Auth error:', err);
       setError(err.message || 'An error occurred');
     } finally {
       setLoading(false);
