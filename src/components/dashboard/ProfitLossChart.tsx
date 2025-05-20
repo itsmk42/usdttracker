@@ -14,6 +14,7 @@ import {
 } from 'chart.js';
 import { Line } from 'react-chartjs-2';
 import { Transaction } from '@/lib/supabase';
+import { ChartData } from '@/types';
 
 ChartJS.register(
   CategoryScale,
@@ -30,7 +31,7 @@ interface ProfitLossChartProps {
 }
 
 export default function ProfitLossChart({ transactions }: ProfitLossChartProps) {
-  const [chartData, setChartData] = useState<any>({
+  const [chartData, setChartData] = useState<ChartData>({
     labels: [],
     datasets: [],
   });
@@ -91,7 +92,7 @@ export default function ProfitLossChart({ transactions }: ProfitLossChartProps) 
         labels: {
           color: 'black', // Ensure legend labels are black
           font: {
-            weight: 'bold' // Make legend text bold for better visibility
+            weight: 'bold' as const // Make legend text bold for better visibility
           }
         }
       },
@@ -102,13 +103,14 @@ export default function ProfitLossChart({ transactions }: ProfitLossChartProps) 
         borderColor: 'rgba(0, 0, 0, 0.1)',
         borderWidth: 1,
         callbacks: {
-          label: function(context: any) {
-            let label = context.dataset.label || '';
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          label(tooltipItem: any) {
+            let label = tooltipItem.dataset.label || '';
             if (label) {
               label += ': ';
             }
-            if (context.parsed.y !== null) {
-              label += '₹' + context.parsed.y.toFixed(2);
+            if (tooltipItem.parsed.y !== null) {
+              label += '₹' + tooltipItem.parsed.y.toFixed(2);
             }
             return label;
           }
@@ -120,8 +122,12 @@ export default function ProfitLossChart({ transactions }: ProfitLossChartProps) 
         beginAtZero: false,
         ticks: {
           color: 'black', // Ensure y-axis labels are black
-          callback: function(value: any) {
-            return '₹' + value.toFixed(2);
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          callback: function(tickValue: any) {
+            if (typeof tickValue === 'number') {
+              return '₹' + tickValue.toFixed(2);
+            }
+            return tickValue;
           }
         }
       },

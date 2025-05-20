@@ -12,15 +12,13 @@ export async function middleware(req: NextRequest) {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        get(name: string) {
+        get(name) {
           return req.cookies.get(name)?.value;
         },
-        set(name: string, value: string, options: any) {
-          // This is used for setting cookies during redirects
+        set(name, value, options) {
           res.cookies.set(name, value, options);
         },
-        remove(name: string, options: any) {
-          // This is used for removing cookies during redirects
+        remove(name, options) {
           res.cookies.set(name, '', { ...options, maxAge: 0 });
         },
       },

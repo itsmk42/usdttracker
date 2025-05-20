@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { format } from 'date-fns';
 import { supabase, Transaction } from '@/lib/supabase';
 
@@ -13,7 +13,7 @@ export default function TransactionList({ userId }: TransactionListProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchTransactions = async () => {
+  const fetchTransactions = useCallback(async () => {
     setLoading(true);
     setError(null);
 
@@ -41,13 +41,13 @@ export default function TransactionList({ userId }: TransactionListProps) {
       // Calculate profit/loss for each transaction
       const transactionsWithProfitLoss = calculateProfitLoss(data || []);
       setTransactions(transactionsWithProfitLoss);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error fetching transactions:', err);
-      setError(err.message || 'An error occurred');
+      setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
       setLoading(false);
     }
-  };
+  }, [userId]);
 
   // Calculate profit/loss based on transaction history
   const calculateProfitLoss = (transactions: Transaction[]): Transaction[] => {
@@ -61,7 +61,7 @@ export default function TransactionList({ userId }: TransactionListProps) {
     let averageCost = 0;
 
     return sortedTransactions.map(transaction => {
-      const { transaction_type, usdt_amount, inr_price, total_value } = transaction;
+      const { transaction_type, usdt_amount, total_value } = transaction;
       let profitLoss = 0;
 
       if (transaction_type === 'buy') {
@@ -104,7 +104,7 @@ export default function TransactionList({ userId }: TransactionListProps) {
     return () => {
       subscription.unsubscribe();
     };
-  }, [userId]); // Re-fetch when userId changes
+  }, [userId, fetchTransactions]); // Re-fetch when userId changes
 
   if (loading) {
     return <div className="text-center py-4">Loading transactions...</div>;

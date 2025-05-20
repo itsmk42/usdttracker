@@ -4,11 +4,7 @@ import { createContext, useContext, useEffect, useState, ReactNode } from 'react
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 
-type AuthContextType = {
-  user: any | null;
-  loading: boolean;
-  signOut: () => Promise<void>;
-};
+import { AuthContextType } from '@/types';
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
@@ -19,7 +15,7 @@ const AuthContext = createContext<AuthContextType>({
 export const useAuth = () => useContext(AuthContext);
 
 export default function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<any | null>(null);
+  const [user, setUser] = useState<AuthContextType['user']>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
@@ -28,7 +24,7 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
     const checkSession = async () => {
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
-        
+
         if (error) {
           console.error('Error getting session:', error);
           setUser(null);
@@ -53,15 +49,15 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
     const { data: authListener } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log('Auth state changed:', event, session?.user?.email);
-        
+
         if (session?.user) {
           setUser(session.user);
         } else {
           setUser(null);
         }
-        
+
         setLoading(false);
-        
+
         // Force refresh on auth state change
         router.refresh();
       }

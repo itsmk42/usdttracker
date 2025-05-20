@@ -66,9 +66,9 @@ export default function AuthForm() {
         }
       }
       reset();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Auth error:', err);
-      setError(err.message || 'An error occurred');
+      setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
       setLoading(false);
     }

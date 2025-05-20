@@ -9,6 +9,7 @@ import {
 } from 'chart.js';
 import { Pie } from 'react-chartjs-2';
 import { Transaction } from '@/lib/supabase';
+import { ChartData } from '@/types';
 
 ChartJS.register(
   ArcElement,
@@ -21,7 +22,7 @@ interface TransactionTypeChartProps {
 }
 
 export default function TransactionTypeChart({ transactions }: TransactionTypeChartProps) {
-  const [chartData, setChartData] = useState<any>({
+  const [chartData, setChartData] = useState<ChartData>({
     labels: [],
     datasets: [],
   });
@@ -36,14 +37,8 @@ export default function TransactionTypeChart({ transactions }: TransactionTypeCh
       datasets: [
         {
           data: [buyCount, sellCount],
-          backgroundColor: [
-            'rgba(75, 192, 192, 0.6)',
-            'rgba(255, 99, 132, 0.6)',
-          ],
-          borderColor: [
-            'rgba(75, 192, 192, 1)',
-            'rgba(255, 99, 132, 1)',
-          ],
+          backgroundColor: 'rgba(75, 192, 192, 0.6)',
+          borderColor: 'rgba(75, 192, 192, 1)',
           borderWidth: 1,
         },
       ],
@@ -59,7 +54,7 @@ export default function TransactionTypeChart({ transactions }: TransactionTypeCh
         labels: {
           color: 'black', // Ensure legend labels are black
           font: {
-            weight: 'bold' // Make legend text bold for better visibility
+            weight: 'bold' as const // Make legend text bold for better visibility
           }
         }
       },
@@ -70,10 +65,11 @@ export default function TransactionTypeChart({ transactions }: TransactionTypeCh
         borderColor: 'rgba(0, 0, 0, 0.1)',
         borderWidth: 1,
         callbacks: {
-          label: function(context: any) {
-            const label = context.label || '';
-            const value = context.raw || 0;
-            const total = context.dataset.data.reduce((a: number, b: number) => a + b, 0);
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          label(tooltipItem: any) {
+            const label = tooltipItem.label || '';
+            const value = tooltipItem.raw || 0;
+            const total = tooltipItem.dataset.data.reduce((a: number, b: number) => a + b, 0);
             const percentage = Math.round((value / total) * 100);
             return `${label}: ${value} (${percentage}%)`;
           }

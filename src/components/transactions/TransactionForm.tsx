@@ -81,9 +81,9 @@ export default function TransactionForm({ onSuccess, userId }: TransactionFormPr
 
       reset();
       onSuccess();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error adding transaction:', err);
-      setError(err.message || 'An error occurred');
+      setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
       setLoading(false);
     }
